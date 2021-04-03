@@ -18,11 +18,10 @@ class JSErrorHandlerView(View):
     def post(self, request):
         """Read POST data and log it as an JS error"""
         error_dict = request.POST.dict()
-        if hasattr(request, 'user'):
-            error_dict['user'] = request.user if request.user.is_authenticated else "<UNAUTHENTICATED>"
-        else:
-            error_dict['user'] = "<UNAUTHENTICATED>"
-
+        # Add the logged-in user (if applicable).
+        if hasattr(request, 'user') and request.user.is_authenticated:
+            error_dict['user'] = request.user
+            
         level = logging.ERROR
         if any(useragent in error_dict['context'].lower() for useragent in BLACKLIST_USERAGENT) or \
                 any(error in error_dict['details'].lower() for error in BLACKLIST_ERRORS):
