@@ -6,8 +6,6 @@ import logging
 
 ERROR_ID = getattr(settings, 'JAVASCRIPT_ERROR_ID', 'javascript_error')
 CSRF_EXEMPT = getattr(settings, 'JAVASCRIPT_ERROR_CSRF_EXEMPT', False)
-BLACKLIST_USERAGENT = getattr(settings, 'JAVASCRIPT_ERROR_USERAGENT_BLACKLIST', ['googlebot', 'bingbot'])
-BLACKLIST_ERRORS = getattr(settings, 'JAVASCRIPT_ERROR_BLACKLIST', [])
 
 logger = logging.getLogger(ERROR_ID)
 
@@ -18,22 +16,61 @@ class JSErrorHandlerView(View):
     def post(self, request):
         """Read POST data and log it as an JS error"""
         error_dict = request.POST.dict()
+
+        user_agent = error_dict['user_agent']
+
+        if 'msg' in error_dict:
+            msg = f"JS error: {error_dict['msg']}"
+            # Not all keys are provided (depending on the browser) so set default values.
+            url = error_dict.get('url', '')
+            line_number = error_dict.get('line_number', '')
+            column_number = error_dict.get('column_number', '')
+            stack = error_dict.get('stack', '')
+            # formatted_details is a string ready for use as email body.
+            formatted_details = f'{url}\nline {line_number}'
+            if column_number:
+                formatted_details += f': col {column_number}'
+            if stack:
+                formatted_details += f'\n{stack}'
+            formatted_details += f'\n{user_agent}'
+            extra_data = {
+                'url': url,
+                'line_number': line_number,
+                'column_number': column_number,
+                'stack': stack,
+                'user_agent': user_agent,
+                'formatted_details': formatted_details
+            }
+        else:
+            msg = f"JS unhandledrejection: {error_dict['rejection_type']}"
+            # Not all keys are provided (depending on the browser) so set default values.
+            reason_message = error_dict.get('reason_message', '')
+            rejection_reason = error_dict.get('rejection_reason', '')
+            reason_stack = error_dict.get('reason_stack', '')
+            # formatted_details is a string ready for use as email body.
+            formatted_details = ''
+            if reason_message:
+                formatted_details += f'\nreason_message: {reason_message}'
+            if rejection_reason:
+                formatted_details += f'\nreason_message: {rejection_reason}'
+            if reason_stack:
+                formatted_details += f'\nreason_message: {reason_stack}'
+            formatted_details += f'\n{user_agent}'
+            extra_data = {
+                'reason_message': reason_message,
+                'rejection_reason': rejection_reason,
+                'reason_stack': reason_stack,
+                'formatted_details': formatted_details
+            }
+
         # Add the logged-in user (if applicable).
         if hasattr(request, 'user') and request.user.is_authenticated:
-            error_dict['user'] = request.user
-            
-        level = logging.ERROR
-        if any(useragent in error_dict['context'].lower() for useragent in BLACKLIST_USERAGENT) or \
-                any(error in error_dict['details'].lower() for error in BLACKLIST_ERRORS):
-            level = logging.WARNING
+            extra_data['user'] = request.user
 
         logger.log(
-            level,
-            "Got error: \n%s", '\n'.join("\t%s: %s" % (key, value) for key, value in error_dict.items()),
-            extra={
-                'status_code': 500,
-                'request': request
-            }
+            logging.ERROR,
+            msg,
+            extra=extra_data
         )
         return HttpResponse('Error logged')
 

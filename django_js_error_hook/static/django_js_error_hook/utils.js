@@ -10,7 +10,7 @@
         return null;
     }
 
-    function logError(details) {
+    function logError(data) {
         var xhr = new XMLHttpRequest();
 
         xhr.open("POST", djangoJSErrorHandlerUrl, true);
@@ -19,38 +19,46 @@
         if (cookie) {
             xhr.setRequestHeader("X-CSRFToken", cookie);
         }
-        var query = [], data = {
-            context: navigator.userAgent,
-            details: details
-        };
+        var query = []
+        data['user_agent'] = navigator.userAgent
         for (var key in data) {
             query.push(encodeURIComponent(key) + '=' + encodeURIComponent(data[key]));
         }
         xhr.send(query.join('&'));
     }
 
-    window.onerror = function (msg, url, line_number, column_number, error_obj) {
-        var log_message = url + ': ' + line_number + ': ' + msg;
+    window.onerror = function (msg,
+                               url,
+                               line_number,
+                               column_number,
+                               error_obj) {
+        var log_dict = {
+            'msg': msg,
+            'url': url,
+            'line_number': line_number,
+        }
         if (column_number) {
-            log_message += ", " + column_number;
+            log_dict['column_number'] = column_number;
         }
         if (error_obj && error_obj.stack) {
-            log_message += ", " + error_obj.stack;
+            log_dict['stack'] = error_obj.stack;
         }
-        logError(log_message);
+        logError(log_dict);
     };
 
     if (window.addEventListener) {
         window.addEventListener('unhandledrejection', function (rejection) {
-            var log_message = rejection.type;
+            var log_dict = {
+                'rejection_type': rejection.type
+            }
             if (rejection.reason) {
                 if (rejection.reason.message) {
-                    log_message += ", " + rejection.reason.message;
+                    log_dict['reason_message'] = rejection.reason.message;
                 } else {
-                    log_message += ", " + JSON.stringify(rejection.reason);
+                    log_dict['rejection_reason'] = JSON.stringify(rejection.reason);
                 }
                 if (rejection.reason.stack) {
-                    log_message += ", " + rejection.reason.stack;
+                    log_dict['reason_stack'] = rejection.reason.stack;
                 }
             }
             logError(log_message);
