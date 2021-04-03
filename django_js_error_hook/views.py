@@ -17,7 +17,7 @@ class JSErrorHandlerView(View):
         """Read POST data and log it as an JS error"""
         error_dict = request.POST.dict()
 
-        user_agent = error_dict['user_agent']
+        user_agent = error_dict.get('user_agent', '')
 
         if 'msg' in error_dict:
             msg = f"JS error: {error_dict['msg']}"
