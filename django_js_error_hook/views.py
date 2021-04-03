@@ -42,7 +42,7 @@ class JSErrorHandlerView(View):
                 'formatted_details': formatted_details
             }
         else:
-            msg = f"JS unhandledrejection: {error_dict['rejection_type']}"
+            msg = f"JS unhandledrejection: {error_dict.get('rejection_type', '')}"
             # Not all keys are provided (depending on the browser) so set default values.
             reason_message = error_dict.get('reason_message', '')
             rejection_reason = error_dict.get('rejection_reason', '')
