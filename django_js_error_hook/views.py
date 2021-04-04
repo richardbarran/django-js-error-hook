@@ -22,12 +22,13 @@ class JSErrorHandlerView(View):
         if 'msg' in error_dict:
             msg = f"JS error: {error_dict['msg']}"
             # Not all keys are provided (depending on the browser) so set default values.
+            href = error_dict.get('href', '')
             url = error_dict.get('url', '')
             line_number = error_dict.get('line_number', '')
             column_number = error_dict.get('column_number', '')
             stack = error_dict.get('stack', '')
             # formatted_details is a string ready for use as email body.
-            formatted_details = f'{url}\nline {line_number}'
+            formatted_details = f'Page href: {href}\nScript url: {url}\nline {line_number}'
             if column_number:
                 formatted_details += f': col {column_number}'
             if stack:

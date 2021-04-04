@@ -19,8 +19,9 @@
         if (cookie) {
             xhr.setRequestHeader("X-CSRFToken", cookie);
         }
-        var query = []
-        data['user_agent'] = navigator.userAgent
+        var query = [];
+        data['user_agent'] = navigator.userAgent;
+        data['href'] = window.location.href;
         for (var key in data) {
             query.push(encodeURIComponent(key) + '=' + encodeURIComponent(data[key]));
         }
