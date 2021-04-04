@@ -62,7 +62,7 @@
                     log_dict['reason_stack'] = rejection.reason.stack;
                 }
             }
-            logError(log_message);
+            logError(log_dict);
         })
     }
 })();
