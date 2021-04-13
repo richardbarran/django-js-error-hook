@@ -65,6 +65,7 @@ class JSErrorHandlerView(View):
                 'reason_message': reason_message,
                 'rejection_reason': rejection_reason,
                 'reason_stack': reason_stack,
+                'user_agent': user_agent,
                 'formatted_details': formatted_details
             }
 
