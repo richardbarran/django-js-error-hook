@@ -35,6 +35,7 @@ class JSErrorHandlerView(View):
                 formatted_details += f'\n{stack}'
             formatted_details += f'\n{user_agent}'
             extra_data = {
+                'js_msg': error_dict['msg'],  # Note rename to avoid clash with LogRecord msg.
                 'url': url,
                 'line_number': line_number,
                 'column_number': column_number,
@@ -43,11 +44,13 @@ class JSErrorHandlerView(View):
                 'formatted_details': formatted_details
             }
         else:
-            msg = f"JS unhandledrejection: {error_dict.get('rejection_type', '')}"
             # Not all keys are provided (depending on the browser) so set default values.
+            rejection_type = error_dict.get('rejection_type', '')
             reason_message = error_dict.get('reason_message', '')
             rejection_reason = error_dict.get('rejection_reason', '')
             reason_stack = error_dict.get('reason_stack', '')
+            # Log message.
+            msg = f"JS unhandled rejection: {rejection_type}"
             # formatted_details is a string ready for use as email body.
             formatted_details = ''
             if reason_message:
@@ -58,6 +61,7 @@ class JSErrorHandlerView(View):
                 formatted_details += f'\nreason_message: {reason_stack}'
             formatted_details += f'\n{user_agent}'
             extra_data = {
+                'rejection_type': rejection_type,
                 'reason_message': reason_message,
                 'rejection_reason': rejection_reason,
                 'reason_stack': reason_stack,
