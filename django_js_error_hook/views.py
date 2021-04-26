@@ -43,6 +43,18 @@ class JSErrorHandlerView(View):
                 'user_agent': user_agent,
                 'formatted_details': formatted_details
             }
+        elif 'application_error_msg' in error_dict:
+            # Custom error message sent by the website. We expect:
+            # - the key 'custom_error' to be set.
+            # - msg contains the main message.
+            # - an arbitrary number of other arguments.
+            msg = f"Custom JS error: {error_dict['application_error_msg']}"
+            extra_data = {'formatted_details': ''}
+            for k, v in error_dict.items():
+                if k == 'application_error_msg':
+                    continue
+                extra_data[k] = v
+                extra_data['formatted_details'] += f'{k}: {v}\n'
         else:
             # Not all keys are provided (depending on the browser) so set default values.
             rejection_type = error_dict.get('rejection_type', '')

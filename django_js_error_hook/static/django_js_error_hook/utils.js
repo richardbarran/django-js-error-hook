@@ -1,32 +1,33 @@
+function djangoJSErrorHookGetCookie(name) {
+    var nameEQ = name + "=";
+    var ca = document.cookie.split(';');
+    for (var i = 0; i < ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+    }
+    return null;
+}
+
+function djangoJSErrorHookLogError(data) {
+    var xhr = new XMLHttpRequest();
+
+    xhr.open("POST", djangoJSErrorHandlerUrl, true);
+    xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+    var cookie = djangoJSErrorHookGetCookie('csrftoken');
+    if (cookie) {
+        xhr.setRequestHeader("X-CSRFToken", cookie);
+    }
+    var query = [];
+    data['user_agent'] = navigator.userAgent;
+    data['href'] = window.location.href;
+    for (var key in data) {
+        query.push(encodeURIComponent(key) + '=' + encodeURIComponent(data[key]));
+    }
+    xhr.send(query.join('&'));
+}
+
 (function () {
-    function getCookie(name) {
-        var nameEQ = name + "=";
-        var ca = document.cookie.split(';');
-        for (var i = 0; i < ca.length; i++) {
-            var c = ca[i];
-            while (c.charAt(0) == ' ') c = c.substring(1, c.length);
-            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
-        }
-        return null;
-    }
-
-    function logError(data) {
-        var xhr = new XMLHttpRequest();
-
-        xhr.open("POST", djangoJSErrorHandlerUrl, true);
-        xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-        var cookie = getCookie('csrftoken');
-        if (cookie) {
-            xhr.setRequestHeader("X-CSRFToken", cookie);
-        }
-        var query = [];
-        data['user_agent'] = navigator.userAgent;
-        data['href'] = window.location.href;
-        for (var key in data) {
-            query.push(encodeURIComponent(key) + '=' + encodeURIComponent(data[key]));
-        }
-        xhr.send(query.join('&'));
-    }
 
     window.onerror = function (msg,
                                url,
@@ -44,7 +45,7 @@
         if (error_obj && error_obj.stack) {
             log_dict['stack'] = error_obj.stack;
         }
-        logError(log_dict);
+        djangoJSErrorHookLogError(log_dict);
     };
 
     if (window.addEventListener) {
@@ -62,7 +63,7 @@
                     log_dict['reason_stack'] = rejection.reason.stack;
                 }
             }
-            logError(log_dict);
+            djangoJSErrorHookLogError(log_dict);
         })
     }
 })();
